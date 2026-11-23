@@ -16,7 +16,7 @@ VERBOSE=0
 case "${1:-}" in
   -v|--verbose) VERBOSE=1 ;;
   -q|--quiet)   VERBOSE=0 ;;
-  -h|--help)    echo "Aufruf: sshid-sync [-v|--verbose] [-q|--quiet]"; exit 0 ;;
+  -h|--help)    echo "Usage: sshid-sync [-v|--verbose] [-q|--quiet]"; exit 0 ;;
 esac
 
 log() {
@@ -26,7 +26,7 @@ log() {
 }
 
 if [ ! -r "$CONF" ]; then
-  log "Konfiguration $CONF fehlt oder ist nicht lesbar"
+  log "Configuration $CONF is missing or not readable"
   exit 1
 fi
 
@@ -48,12 +48,12 @@ while IFS= read -r user || [ -n "$user" ]; do
   [ -z "$user" ] && continue
 
   if [[ ! "$user" =~ ^[A-Za-z0-9._-]+$ ]]; then
-    log "Ungültiger Benutzername übersprungen: $user"
+    log "Skipped invalid username: $user"
     continue
   fi
 
   if ! curl -fsSL --max-time 15 "$BASE_URL/$user" -o "$TMP"; then
-    log "[$user] Abruf fehlgeschlagen – übersprungen"
+    log "[$user] Fetch failed – skipped"
     continue
   fi
 
@@ -68,16 +68,16 @@ while IFS= read -r user || [ -n "$user" ]; do
     if ! grep -qF -- "$blob" "$AK"; then
       printf '%s\n' "$line" >> "$AK"
       total=$((total + 1))
-      log "[$user] Key hinzugefügt: $fp"
+      log "[$user] Key added: $fp"
     fi
   done < "$TMP"
 
-  [ "$found" -eq 0 ] && log "[$user] Keine gültigen Keys gefunden"
+  [ "$found" -eq 0 ] && log "[$user] No valid keys found"
 done < "$CONF"
 
 if [ "$total" -gt 0 ]; then
-  log "$total neue(r) Key(s) hinzugefügt"
+  log "$total new key(s) added"
 else
-  [ "$VERBOSE" -eq 1 ] && echo "sshid-sync: Keine neuen Keys."
+  [ "$VERBOSE" -eq 1 ] && echo "sshid-sync: No new keys."
 fi
 exit 0
