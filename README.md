@@ -1,11 +1,11 @@
 # sshid-sync
 
-Holt die SSH-Public-Keys eines oder mehrerer [sshid.io](https://sshid.io)-Benutzer und trägt sie automatisch in `/root/.ssh/authorized_keys` ein.
+Fetches the SSH public keys of one or more [sshid.io](https://sshid.io) users and adds them to `/root/.ssh/authorized_keys` automatically.
 
-- Bereits vorhandene Keys werden **nicht doppelt** eingetragen (Vergleich über den Schlüssel selbst, der Kommentar spielt keine Rolle).
-- Ungültige Antworten (z. B. HTML-Fehlerseiten) werden ignoriert: Es landen nur echte Public Keys in der Datei.
-- Ist sshid.io nicht erreichbar, bleibt die Datei unverändert.
-- Der Abgleich läuft regelmäßig (Standard: alle 4 Stunden) und kurz nach jedem Systemstart.
+- Keys that are already present are **not added twice** (the comparison uses the key itself, the comment does not matter).
+- Invalid responses (e.g. HTML error pages) are ignored: only real public keys end up in the file.
+- If sshid.io is unreachable, the file is left unchanged.
+- The sync runs regularly (default: every 4 hours) and shortly after every boot.
 
 ## Installation
 
@@ -15,62 +15,62 @@ cd sshid-sync
 sudo ./install.sh
 ```
 
-Oder in einer Zeile:
+Or as a one-liner:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/REPO_OWNER/sshid-sync/main/install.sh | sudo bash
 ```
 
-Der Installer fragt nach:
+The installer asks for:
 
-1. den **sshid.io-Benutzernamen**: einer pro Eingabe, leere Eingabe beendet die Liste. Für jeden Namen wird sofort geprüft, ob und welche Keys sshid.io liefert.
-2. dem **Intervall** in Stunden (Standard: 4)
+1. the **sshid.io usernames**: one per prompt, an empty input ends the list. Each name is checked immediately to see whether sshid.io returns keys for it, and which ones.
+2. the **interval** in hours (default: 4)
 
-Danach legt er ein Backup der `authorized_keys` an, richtet den Zeitplan ein (systemd-Timer, sonst Cron) und führt den ersten Abgleich aus.
+It then creates a backup of `authorized_keys`, sets up the schedule (systemd timer, otherwise cron) and runs the first sync.
 
-### Ohne Rückfragen
+### Non-interactive
 
 ```bash
-sudo ./install.sh --users okaluk,kollege --interval 4 -y
+sudo ./install.sh --users okaluk,colleague --interval 4 -y
 ```
 
-## Benutzung
+## Usage
 
-| Aufgabe | Befehl |
+| Task | Command |
 |---|---|
-| Sofort abgleichen | `sudo sshid-sync` |
-| Benutzer hinzufügen/entfernen | `/etc/sshid-sync.conf` bearbeiten oder `sudo ./install.sh` erneut ausführen |
-| Log ansehen | `journalctl -t sshid-sync` |
-| Zeitplan prüfen (systemd) | `systemctl list-timers sshid-sync.timer` |
-| Deinstallieren | `sudo ./install.sh --uninstall` |
+| Sync now | `sudo sshid-sync` |
+| Add/remove users | Edit `/etc/sshid-sync.conf` or run `sudo ./install.sh` again |
+| View the log | `journalctl -t sshid-sync` |
+| Check the schedule (systemd) | `systemctl list-timers sshid-sync.timer` |
+| Uninstall | `sudo ./install.sh --uninstall` |
 
-`/etc/sshid-sync.conf` enthält einen Benutzernamen pro Zeile, Kommentare beginnen mit `#`:
+`/etc/sshid-sync.conf` contains one username per line, comments start with `#`:
 
 ```
 okaluk
-# kollege
+# colleague
 ```
 
-## Was installiert wird
+## What gets installed
 
-| Datei | Zweck |
+| File | Purpose |
 |---|---|
-| `/usr/local/sbin/sshid-sync` | Sync-Skript |
-| `/etc/sshid-sync.conf` | Liste der sshid.io-Benutzer |
-| `/etc/systemd/system/sshid-sync.{service,timer}` | Zeitplan (bei systemd) |
-| `/etc/cron.d/sshid-sync` | Zeitplan (ohne systemd) |
-| `/root/.ssh/authorized_keys.bak-*` | Backup vor der Installation |
+| `/usr/local/sbin/sshid-sync` | Sync script |
+| `/etc/sshid-sync.conf` | List of sshid.io users |
+| `/etc/systemd/system/sshid-sync.{service,timer}` | Schedule (with systemd) |
+| `/etc/cron.d/sshid-sync` | Schedule (without systemd) |
+| `/root/.ssh/authorized_keys.bak-*` | Backup taken before installation |
 
-## Wichtig
+## Important
 
-- **Jeder eingetragene sshid.io-Benutzer erhält Root-Zugang.** Dasselbe gilt für jeden, der eines dieser sshid.io-Konten übernimmt. Schütze die Konten deshalb gut (Passkey/2FA).
-- **Keys werden nur hinzugefügt, nie entfernt.** Entfernst du ein Gerät bei sshid.io oder einen Benutzer aus der Konfiguration, musst du dessen Key selbst aus `authorized_keys` löschen. Im Log (`journalctl -t sshid-sync`) steht bei jedem hinzugefügten Key der Benutzer und der Fingerprint.
-- Behalte mindestens einen Key fest in `authorized_keys`, der nicht von sshid.io abhängt.
+- **Every configured sshid.io user gets root access.** The same applies to anyone who takes over one of those sshid.io accounts, so protect the accounts well (passkey/2FA).
+- **Keys are only added, never removed.** If you remove a device on sshid.io or a user from the configuration, you have to delete that key from `authorized_keys` yourself. The log (`journalctl -t sshid-sync`) records the user and the fingerprint for every key that was added.
+- Keep at least one key in `authorized_keys` that does not depend on sshid.io.
 
-## Voraussetzungen
+## Requirements
 
-`bash`, `curl`, `ssh-keygen` (openssh-client), `logger` sowie systemd oder cron. Auf Debian/Ubuntu ist das in der Regel vorhanden.
+`bash`, `curl`, `ssh-keygen` (openssh-client), `logger`, and either systemd or cron. On Debian/Ubuntu these are usually already present.
 
-## Lizenz
+## License
 
 MIT

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Installer für sshid-sync
+# Installer for sshid-sync
 #
-#   sudo ./install.sh                       interaktiv
-#   sudo ./install.sh --users a,b -y        ohne Rückfragen
-#   sudo ./install.sh --uninstall           entfernen
+#   sudo ./install.sh                       interactive
+#   sudo ./install.sh --users a,b -y        non-interactive
+#   sudo ./install.sh --uninstall           remove
 #
-# Oder direkt aus GitHub:
+# Or straight from GitHub:
 #   curl -fsSL https://raw.githubusercontent.com/REPO_OWNER/sshid-sync/main/install.sh | sudo bash
 
 set -euo pipefail
@@ -58,11 +58,11 @@ done
 
 [ "$(id -u)" -eq 0 ] || die "Bitte als root ausführen (sudo)."
 
-# Eingaben von /dev/tty lesen, damit es auch mit "curl ... | sudo bash" funktioniert
+# Read input from /dev/tty so that "curl ... | sudo bash" works too
 HAVE_TTY=0
 if [ "$ASSUME_YES" -eq 0 ] && { : < /dev/tty; } 2>/dev/null; then HAVE_TTY=1; fi
 
-ask() { # ask "Frage" "Standard" -> Antwort auf stdout
+ask() { # ask "question" "default" -> answer on stdout
   local answer=""
   if [ "$HAVE_TTY" -eq 1 ]; then
     read -r -p "$1 " answer < /dev/tty || true
@@ -70,7 +70,7 @@ ask() { # ask "Frage" "Standard" -> Antwort auf stdout
   printf '%s' "${answer:-$2}"
 }
 
-confirm() { # confirm "Frage" (Standard: ja)
+confirm() { # confirm "question" (default: yes)
   [ "$ASSUME_YES" -eq 1 ] && return 0
   [ "$HAVE_TTY" -eq 0 ] && return 0
   local a; a="$(ask "$1 [J/n]" "j")"
@@ -79,7 +79,7 @@ confirm() { # confirm "Frage" (Standard: ja)
 
 has_systemd() { [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; }
 
-# ---------------------------------------------------------------- Deinstallation
+# ---------------------------------------------------------------- Uninstall
 if [ "$MODE" = "uninstall" ]; then
   info "Entferne sshid-sync"
   if has_systemd && [ -f "$TIMER" ]; then
@@ -117,7 +117,7 @@ else
 fi
 ok "Zeitplanung über $SCHEDULER"
 
-# Benutzer zeigen, wie viele Keys sshid.io liefert
+# Show the user how many keys sshid.io returns
 check_user() {
   local user="$1" tmp count=0 line fp
   tmp="$(mktemp)"
@@ -135,7 +135,7 @@ check_user() {
   ok "$user: $count Key(s)"
 }
 
-# Vorhandene Konfiguration übernehmen
+# Carry over the existing configuration
 USERS=()
 if [ -f "$CONF" ]; then
   while IFS= read -r u || [ -n "$u" ]; do
@@ -182,7 +182,7 @@ fi
 
 [ "${#USERS[@]}" -gt 0 ] || die "Keine Benutzer angegeben (interaktiv oder mit --users)."
 
-# Intervall
+# Interval
 if [ -z "$INTERVAL" ]; then
   INTERVAL="$(ask "$(printf '%s==>%s Abgleich alle wie viele Stunden? [4]' "$c_bold" "$c_reset")" "4")"
 fi
@@ -199,7 +199,7 @@ echo "  ${c_yellow}Hinweis:${c_reset} Jeder dieser sshid.io-Benutzer erhält Roo
 echo
 confirm "Installieren?" || die "Abgebrochen."
 
-# Sync-Skript beschaffen
+# Obtain the sync script
 info "Installiere"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
 if [ -n "$SRC_DIR" ] && [ -f "$SRC_DIR/sshid-sync.sh" ]; then
@@ -212,9 +212,9 @@ else
 fi
 ok "$BIN"
 
-# Konfiguration
+# Configuration
 {
-  echo "# sshid-sync – ein sshid.io-Benutzername pro Zeile. Kommentare mit #"
+  echo "# sshid-sync – one sshid.io username per line. Comments start with #"
   printf '%s\n' "${USERS[@]}"
 } > "$CONF"
 chmod 600 "$CONF"
@@ -227,7 +227,7 @@ if [ -s "$AK" ]; then
   ok "Backup: $BACKUP"
 fi
 
-# Zeitplan
+# Schedule
 if [ "$SCHEDULER" = "systemd" ]; then
   cat > "$SVC" <<EOF
 [Unit]
@@ -257,7 +257,7 @@ EOF
   ok "systemd-Timer aktiv (systemctl list-timers sshid-sync.timer)"
 else
   cat > "$CRON_FILE" <<EOF
-# sshid-sync – SSH-Keys von sshid.io abgleichen
+# sshid-sync – sync SSH keys from sshid.io
 0 */$INTERVAL * * * root $BIN
 @reboot root sleep 120 && $BIN
 EOF
@@ -265,7 +265,7 @@ EOF
   ok "Cron-Eintrag $CRON_FILE"
 fi
 
-# Erster Lauf
+# First run
 info "Erster Abgleich"
 "$BIN" --verbose
 

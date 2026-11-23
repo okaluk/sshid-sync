@@ -1,8 +1,8 @@
 #!/bin/bash
-# sshid-sync – holt SSH-Public-Keys von sshid.io und ergänzt authorized_keys,
-# ohne bereits vorhandene Keys doppelt einzutragen.
+# sshid-sync – fetches SSH public keys from sshid.io and appends them to
+# authorized_keys without adding keys that are already present a second time.
 #
-# Konfiguration: /etc/sshid-sync.conf (ein sshid.io-Benutzername pro Zeile)
+# Configuration: /etc/sshid-sync.conf (one sshid.io username per line)
 # Log:           journalctl -t sshid-sync
 
 set -uo pipefail
@@ -33,7 +33,7 @@ fi
 AK_DIR="$(dirname "$AK")"
 mkdir -p "$AK_DIR" && chmod 700 "$AK_DIR"
 touch "$AK" && chmod 600 "$AK"
-# Sicherstellen, dass die Datei mit einem Zeilenumbruch endet
+# Make sure the file ends with a newline
 if [ -s "$AK" ] && [ -n "$(tail -c1 "$AK")" ]; then
   echo >> "$AK"
 fi
@@ -61,7 +61,7 @@ while IFS= read -r user || [ -n "$user" ]; do
   while IFS= read -r line || [ -n "$line" ]; do
     line="${line%$'\r'}"
     [ -z "$line" ] && continue
-    # Nur gültige Public Keys übernehmen (filtert z. B. HTML-Fehlerseiten heraus)
+    # Only accept valid public keys (filters out e.g. HTML error pages)
     fp="$(ssh-keygen -lf - <<<"$line" 2>/dev/null)" || continue
     found=$((found + 1))
     blob="$(awk '{print $2}' <<<"$line")"
