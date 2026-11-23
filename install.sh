@@ -6,11 +6,11 @@
 #   sudo ./install.sh --uninstall           remove
 #
 # Or straight from GitHub:
-#   curl -fsSL https://raw.githubusercontent.com/REPO_OWNER/sshid-sync/main/install.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/okaluk/sshid-sync/main/install.sh | sudo bash
 
 set -euo pipefail
 
-REPO="${SSHID_SYNC_REPO:-REPO_OWNER/sshid-sync}"
+REPO="${SSHID_SYNC_REPO:-okaluk/sshid-sync}"
 BRANCH="${SSHID_SYNC_BRANCH:-main}"
 RAW_URL="https://raw.githubusercontent.com/$REPO/$BRANCH"
 
@@ -205,7 +205,6 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo ""
 if [ -n "$SRC_DIR" ] && [ -f "$SRC_DIR/sshid-sync.sh" ]; then
   install -m 700 "$SRC_DIR/sshid-sync.sh" "$BIN"
 else
-  case "$REPO" in REPO_OWNER/*) die "sshid-sync.sh nicht gefunden. Bitte das Repository klonen und install.sh dort ausführen." ;; esac
   tmp="$(mktemp)"
   curl -fsSL "$RAW_URL/sshid-sync.sh" -o "$tmp" || die "Download von $RAW_URL/sshid-sync.sh fehlgeschlagen."
   install -m 700 "$tmp" "$BIN"; rm -f "$tmp"

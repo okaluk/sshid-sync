@@ -10,7 +10,7 @@ Fetches the SSH public keys of one or more [sshid.io](https://sshid.io) users an
 ## Installation
 
 ```bash
-git clone https://github.com/REPO_OWNER/sshid-sync.git
+git clone https://github.com/okaluk/sshid-sync.git
 cd sshid-sync
 sudo ./install.sh
 ```
@@ -18,7 +18,7 @@ sudo ./install.sh
 Or as a one-liner:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/REPO_OWNER/sshid-sync/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/okaluk/sshid-sync/main/install.sh | sudo bash
 ```
 
 The installer asks for:
